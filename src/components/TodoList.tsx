@@ -59,11 +59,6 @@ interface TodoSection {
   isExpanded?: boolean;
 }
 
-interface MultipleTasksInput {
-  urls: string;
-  dueDate: Date | null;
-}
-
 // Interface for storing data in localStorage
 interface StoredSection {
   id: string;
@@ -123,12 +118,7 @@ export default function TodoList() {
   const [title, setTitle] = useState('');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-  const [isMultipleTasksDialogOpen, setIsMultipleTasksDialogOpen] = useState(false);
   const [isNewSectionDialogOpen, setIsNewSectionDialogOpen] = useState(false);
-  const [multipleTasksInput, setMultipleTasksInput] = useState<MultipleTasksInput>({
-    urls: '',
-    dueDate: null,
-  });
 
   // Save to localStorage whenever sections change
   useEffect(() => {
@@ -201,7 +191,7 @@ export default function TodoList() {
       }
 
       const newTodo: Todo = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         title: pageTitle,
         url,
         dueDate,
@@ -221,62 +211,6 @@ export default function TodoList() {
     } catch (error) {
       console.error('Error fetching URL:', error);
       showSnackbar('Error fetching URL. Please check the URL and try again.', 'error');
-    }
-  };
-
-  const handleAddMultipleTasks = async () => {
-    if (!multipleTasksInput.urls || !multipleTasksInput.dueDate || !currentSection) return;
-
-    const urls = multipleTasksInput.urls.split('\n').filter(url => url.trim());
-    const successfulAdds: string[] = [];
-    const failedAdds: string[] = [];
-    let updatedTodos: Todo[] = [];
-
-    for (const url of urls) {
-      try {
-        const response = await fetch(url.trim());
-        const text = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        const pageTitle = doc.title || url;
-
-        if (isDuplicateTask(currentSection, url, pageTitle)) {
-          failedAdds.push(url);
-          continue;
-        }
-
-        const newTodo: Todo = {
-          id: crypto.randomUUID(), // Using crypto.randomUUID() for truly unique IDs
-          title: pageTitle,
-          url: url.trim(),
-          dueDate: multipleTasksInput.dueDate,
-          completed: false,
-        };
-
-        updatedTodos.push(newTodo);
-        successfulAdds.push(url);
-      } catch (error) {
-        console.error('Error fetching URL:', error);
-        failedAdds.push(url);
-      }
-    }
-
-    if (updatedTodos.length > 0) {
-      setSections(sections.map(section => 
-        section.id === currentSection
-          ? { ...section, todos: [...section.todos, ...updatedTodos] }
-          : section
-      ));
-    }
-
-    setIsMultipleTasksDialogOpen(false);
-    setMultipleTasksInput({ urls: '', dueDate: null });
-
-    if (successfulAdds.length > 0) {
-      showSnackbar(`Successfully added ${successfulAdds.length} tasks`, 'success');
-    }
-    if (failedAdds.length > 0) {
-      showSnackbar(`Failed to add ${failedAdds.length} tasks`, 'error');
     }
   };
 
@@ -673,76 +607,80 @@ export default function TodoList() {
         </DialogActions>
       </Dialog>
 
-      {/* Multiple Tasks Dialog */}
-      <Dialog
-        open={isMultipleTasksDialogOpen}
-        onClose={() => setIsMultipleTasksDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Add Multiple Tasks</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={6}
-              label="URLs (One per line)"
-              value={multipleTasksInput.urls}
-              onChange={(e) => setMultipleTasksInput({ ...multipleTasksInput, urls: e.target.value })}
-              variant="outlined"
-              placeholder="https://example1.com&#10;https://example2.com&#10;https://example3.com"
-              sx={{ mb: 2 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LinkIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              fullWidth
-              label="Due Date"
-              type="date"
-              value={multipleTasksInput.dueDate ? multipleTasksInput.dueDate.toISOString().split('T')[0] : ''}
-              onChange={(e) => setMultipleTasksInput({ ...multipleTasksInput, dueDate: new Date(e.target.value) })}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CalendarTodayIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsMultipleTasksDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleAddMultipleTasks}
-            variant="contained"
-            disabled={!multipleTasksInput.urls.trim() || !multipleTasksInput.dueDate}
-          >
-            Add Tasks
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {currentSection && (
-        <FloatingAddButton 
-          color="secondary" 
-          onClick={() => setIsMultipleTasksDialogOpen(true)}
-          sx={{ bottom: theme.spacing(16) }}
-          variant="extended"
-        >
-          <AddIcon sx={{ mr: 1 }} />
-          Add Tasks
-        </FloatingAddButton>
+        <Box sx={{ 
+          position: 'fixed',
+          bottom: theme.spacing(4),
+          right: theme.spacing(4),
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          alignItems: 'flex-end'
+        }}>
+          <Card sx={{ p: 2, width: '300px' }}>
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                label="URL"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LinkIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Title (Optional)"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AssignmentIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Due Date"
+                type="date"
+                value={dueDate ? dueDate.toISOString().split('T')[0] : ''}
+                onChange={handleDateChange}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarTodayIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleAddTodo}
+                disabled={!url || !dueDate}
+                startIcon={<AddIcon />}
+              >
+                Add Task
+              </Button>
+            </Stack>
+          </Card>
+        </Box>
       )}
     </Box>
   );
