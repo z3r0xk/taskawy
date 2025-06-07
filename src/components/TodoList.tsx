@@ -230,6 +230,7 @@ export default function TodoList() {
     const urls = multipleTasksInput.urls.split('\n').filter(url => url.trim());
     const successfulAdds: string[] = [];
     const failedAdds: string[] = [];
+    let updatedTodos: Todo[] = [];
 
     for (const url of urls) {
       try {
@@ -245,24 +246,27 @@ export default function TodoList() {
         }
 
         const newTodo: Todo = {
-          id: Date.now().toString() + Math.random(),
+          id: crypto.randomUUID(), // Using crypto.randomUUID() for truly unique IDs
           title: pageTitle,
           url: url.trim(),
           dueDate: multipleTasksInput.dueDate,
           completed: false,
         };
 
-        setSections(sections.map(section => 
-          section.id === currentSection
-            ? { ...section, todos: [...section.todos, newTodo] }
-            : section
-        ));
-
+        updatedTodos.push(newTodo);
         successfulAdds.push(url);
       } catch (error) {
         console.error('Error fetching URL:', error);
         failedAdds.push(url);
       }
+    }
+
+    if (updatedTodos.length > 0) {
+      setSections(sections.map(section => 
+        section.id === currentSection
+          ? { ...section, todos: [...section.todos, ...updatedTodos] }
+          : section
+      ));
     }
 
     setIsMultipleTasksDialogOpen(false);
