@@ -74,8 +74,30 @@ const StyledCard = styled(Card)(({ theme }) => ({
     transform: 'translateY(-4px)',
     boxShadow: theme.shadows[8],
   },
-  borderRadius: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
   overflow: 'visible',
+  background: theme.palette.mode === 'dark' 
+    ? 'linear-gradient(135deg, rgba(20,20,20,0.8) 0%, rgba(30,30,30,0.8) 100%)'
+    : 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(245,245,245,0.8) 100%)',
+  backdropFilter: 'blur(10px)',
+  border: `1px solid ${theme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(0,0,0,0.12)'}`,
+}));
+
+const TaskCard = styled(Card)(({ theme }) => ({
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateX(8px)',
+    backgroundColor: theme.palette.mode === 'dark' 
+      ? 'rgba(0, 255, 157, 0.1)' 
+      : 'rgba(0, 204, 125, 0.1)',
+  },
+  background: theme.palette.mode === 'dark' 
+    ? 'rgba(20,20,20,0.6)'
+    : 'rgba(255,255,255,0.6)',
+  backdropFilter: 'blur(5px)',
+  border: `1px solid ${theme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(0,0,0,0.12)'}`,
+  marginBottom: theme.spacing(2),
+  padding: theme.spacing(2),
 }));
 
 const FloatingAddButton = styled(Fab)(({ theme }) => ({
@@ -331,297 +353,280 @@ export default function TodoList() {
   }, []);
 
   return (
-    <Box sx={{ pb: 10 }}>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+    <Box>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 600,
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(45deg, #00ff9d 30%, #00cc7d 90%)'
+                  : 'linear-gradient(45deg, #00cc7d 30%, #009960 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Task Dashboard
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => setIsNewSectionDialogOpen(true)}
+              startIcon={<AddIcon />}
+              sx={{
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(45deg, #00ff9d 30%, #00cc7d 90%)'
+                  : 'linear-gradient(45deg, #00cc7d 30%, #009960 90%)',
+                color: '#000',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 20px rgba(0, 255, 157, 0.3)',
+                },
+              }}
+            >
+              New Section
+            </Button>
+          </Box>
+        </Grid>
 
-      {sections.map((section) => (
-        <Fade in={true} key={section.id}>
-          <StyledCard sx={{ mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <IconButton
-                  onClick={() => handleToggleSection(section.id)}
-                  size="small"
-                  sx={{ mr: 1 }}
-                >
-                  {section.isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
-                <Stack direction="row" alignItems="center" spacing={2} sx={{ flexGrow: 1 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 500 }}>
-                    {section.title}
-                  </Typography>
-                  <Badge 
-                    badgeContent={getUpcomingTasksCount(section)} 
-                    color="primary"
-                    sx={{ '& .MuiBadge-badge': { fontSize: '0.9rem', height: '22px', minWidth: '22px' } }}
-                  >
-                    <Chip
+        {sections.map((section) => (
+          <Grid item xs={12} key={section.id}>
+            <StyledCard>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontWeight: 600,
+                        mb: 1,
+                      }}
+                    >
+                      {section.title}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <ProgressBar 
+                          variant="determinate" 
+                          value={getCompletionPercentage(section)}
+                        />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                          {`${Math.round(getCompletionPercentage(section))}% completed`}
+                        </Typography>
+                      </Box>
+                      <Badge 
+                        badgeContent={getUpcomingTasksCount(section)} 
+                        color="primary"
+                        sx={{ 
+                          '& .MuiBadge-badge': { 
+                            fontSize: '0.9rem', 
+                            height: '22px', 
+                            minWidth: '22px',
+                            background: theme.palette.mode === 'dark'
+                              ? 'linear-gradient(45deg, #00ff9d 30%, #00cc7d 90%)'
+                              : 'linear-gradient(45deg, #00cc7d 30%, #009960 90%)',
+                            color: '#000',
+                          }
+                        }}
+                      >
+                        <Chip
+                          size="small"
+                          label={`${section.todos.length} tasks`}
+                          sx={{ 
+                            backgroundColor: theme.palette.mode === 'dark' 
+                              ? 'rgba(255,255,255,0.05)' 
+                              : 'rgba(0,0,0,0.05)',
+                            borderRadius: '12px',
+                            fontFamily: "'JetBrains Mono', monospace",
+                          }}
+                        />
+                      </Badge>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant={currentSection === section.id ? "contained" : "outlined"}
+                      onClick={() => setCurrentSection(section.id)}
                       size="small"
-                      label={`${section.todos.length} tasks`}
-                      sx={{ backgroundColor: theme.palette.background.default }}
-                    />
-                  </Badge>
-                </Stack>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant={currentSection === section.id ? "contained" : "outlined"}
-                    onClick={() => setCurrentSection(section.id)}
-                    size="small"
-                    sx={{ 
-                      borderRadius: '20px',
-                      textTransform: 'none',
-                      minWidth: '100px'
-                    }}
-                  >
-                    {currentSection === section.id ? 'Selected' : 'Select'}
-                  </Button>
-                  <Tooltip title="Delete Section">
+                      sx={{ 
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        minWidth: '100px',
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                    >
+                      {currentSection === section.id ? 'Selected' : 'Select'}
+                    </Button>
                     <IconButton
-                      color="error"
+                      onClick={() => handleToggleSection(section.id)}
+                      size="small"
+                      sx={{ 
+                        color: theme.palette.text.secondary,
+                        '&:hover': {
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                    >
+                      {section.isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    </IconButton>
+                    <IconButton
                       onClick={() => handleDeleteSection(section.id)}
                       size="small"
+                      sx={{
+                        color: theme.palette.error.main,
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                        },
+                      }}
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </Tooltip>
-                </Stack>
-              </Box>
+                  </Box>
+                </Box>
 
-              <Box sx={{ px: 1, mb: 2 }}>
-                <ProgressBar 
-                  variant="determinate" 
-                  value={getCompletionPercentage(section)}
-                  sx={{ mb: 1 }}
-                />
-                <Typography variant="caption" color="text.secondary">
-                  {`${Math.round(getCompletionPercentage(section))}% completed`}
-                </Typography>
-              </Box>
+                <Collapse in={section.isExpanded}>
+                  {section.todos.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <input
+                        accept="application/pdf"
+                        style={{ display: 'none' }}
+                        id={`section-pdf-${section.id}`}
+                        type="file"
+                        onChange={(e) => handleFileChange(e, section.id)}
+                      />
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <label htmlFor={`section-pdf-${section.id}`}>
+                          <Button
+                            variant="outlined"
+                            component="span"
+                            startIcon={<PictureAsPdfIcon />}
+                            size="small"
+                            sx={{ 
+                              borderRadius: '12px',
+                              textTransform: 'none',
+                              fontFamily: "'JetBrains Mono', monospace",
+                            }}
+                          >
+                            {section.pdfFile ? 'Change Summary' : 'Add Summary'}
+                          </Button>
+                        </label>
+                        {section.pdfUrl && (
+                          <Link 
+                            href={section.pdfUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              color: theme.palette.primary.main,
+                              textDecoration: 'none',
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: '0.9rem',
+                              '&:hover': {
+                                textDecoration: 'underline',
+                              },
+                            }}
+                          >
+                            View Summary
+                            <OpenInNewIcon sx={{ fontSize: '1rem' }} />
+                          </Link>
+                        )}
+                      </Stack>
+                    </Box>
+                  )}
 
-              <Collapse in={section.isExpanded}>
-                {section.todos.length > 0 && (
-                  <Box sx={{ mb: 2 }}>
-                    <input
-                      accept="application/pdf"
-                      style={{ display: 'none' }}
-                      id={`section-pdf-${section.id}`}
-                      type="file"
-                      onChange={(e) => handleFileChange(e, section.id)}
-                    />
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <label htmlFor={`section-pdf-${section.id}`}>
-                        <Button
-                          variant="outlined"
-                          component="span"
-                          startIcon={<PictureAsPdfIcon />}
-                          size="small"
-                          sx={{ 
-                            borderRadius: '20px',
-                            textTransform: 'none'
-                          }}
-                        >
-                          {section.pdfFile ? 'Change Summary' : 'Add Summary'}
-                        </Button>
-                      </label>
-                      {section.pdfFile && section.pdfUrl && (
-                        <Stack direction="row" spacing={1}>
+                  {section.todos.map((todo) => (
+                    <TaskCard key={todo.id}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography 
+                            variant="subtitle1"
+                            sx={{ 
+                              mb: 0.5,
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontWeight: 600,
+                              textDecoration: todo.completed ? 'line-through' : 'none',
+                              color: todo.completed ? theme.palette.text.secondary : theme.palette.text.primary,
+                            }}
+                          >
+                            {todo.title}
+                          </Typography>
                           <Link
-                            href={section.pdfUrl}
+                            href={todo.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             sx={{
-                              textDecoration: 'none',
                               display: 'flex',
                               alignItems: 'center',
+                              gap: 0.5,
+                              color: theme.palette.primary.main,
+                              textDecoration: 'none',
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: '0.9rem',
+                              mb: 1,
+                              '&:hover': {
+                                textDecoration: 'underline',
+                              },
                             }}
                           >
-                            <Chip
-                              icon={<PictureAsPdfIcon />}
-                              label={section.pdfFile.name}
-                              variant="outlined"
-                              color="primary"
-                              onDelete={() => {
-                                cleanupPdfUrl(section);
-                                setSections(sections.map(s =>
-                                  s.id === section.id
-                                    ? { ...s, pdfFile: undefined, pdfUrl: undefined }
-                                    : s
-                                ));
-                              }}
-                              deleteIcon={
-                                <Stack direction="row" spacing={0.5}>
-                                  <DeleteIcon />
-                                  <Divider orientation="vertical" flexItem />
-                                  <OpenInNewIcon />
-                                </Stack>
-                              }
-                              sx={{ 
-                                borderRadius: '20px',
-                                '& .MuiChip-deleteIcon': {
-                                  display: 'flex',
-                                  order: 2,
-                                  mr: 0,
-                                  ml: 1
-                                }
-                              }}
-                            />
+                            <LinkIcon sx={{ fontSize: '1rem' }} />
+                            {todo.url}
                           </Link>
-                        </Stack>
-                      )}
-                    </Stack>
-                  </Box>
-                )}
-
-                <List sx={{ pt: 0 }}>
-                  {section.todos.map((todo) => (
-                    <ListItem
-                      key={todo.id}
-                      sx={{
-                        mb: 1,
-                        bgcolor: theme.palette.background.default,
-                        borderRadius: theme.spacing(2),
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          transform: 'translateX(8px)',
-                          bgcolor: theme.palette.action.hover,
-                        },
-                      }}
-                      secondaryAction={
-                        <Stack direction="row" spacing={1}>
-                          <Tooltip title={todo.completed ? "Mark as Incomplete" : "Mark as Complete"}>
-                            <IconButton
-                              edge="end"
-                              onClick={() => handleToggleComplete(section.id, todo.id)}
-                              color={todo.completed ? "success" : "default"}
-                              size="small"
-                            >
-                              <CheckCircleIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete Task">
-                            <IconButton
-                              edge="end"
-                              onClick={() => handleDeleteTodo(section.id, todo.id)}
-                              color="error"
-                              size="small"
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      }
-                    >
-                      <ListItemText
-                        primary={
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Link
-                              href={todo.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              sx={{
-                                textDecoration: todo.completed ? 'line-through' : 'none',
-                                color: todo.completed ? 'text.disabled' : 'primary.main',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {todo.title}
-                            </Link>
-                            <Chip
-                              size="small"
-                              icon={<CalendarTodayIcon sx={{ fontSize: '0.9rem' }} />}
-                              label={new Date(todo.dueDate).toLocaleDateString()}
-                              variant="outlined"
-                              sx={{ 
-                                borderRadius: '12px',
-                                height: '24px',
-                                '& .MuiChip-label': { px: 1, fontSize: '0.75rem' }
-                              }}
-                            />
-                          </Stack>
-                        }
-                        secondary={
                           <Typography 
                             variant="caption" 
-                            color="text.secondary"
                             sx={{ 
                               display: 'flex',
                               alignItems: 'center',
                               gap: 0.5,
-                              mt: 0.5
+                              color: theme.palette.text.secondary,
+                              fontFamily: "'JetBrains Mono', monospace",
                             }}
                           >
-                            <LinkIcon sx={{ fontSize: '0.9rem' }} />
-                            {todo.url}
+                            <CalendarTodayIcon sx={{ fontSize: '1rem' }} />
+                            {new Date(todo.dueDate).toLocaleDateString()}
                           </Typography>
-                        }
-                      />
-                    </ListItem>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <IconButton
+                            onClick={() => handleToggleComplete(section.id, todo.id)}
+                            size="small"
+                            sx={{
+                              color: todo.completed ? theme.palette.success.main : theme.palette.text.secondary,
+                              '&:hover': {
+                                backgroundColor: todo.completed 
+                                  ? 'rgba(0, 255, 157, 0.1)'
+                                  : 'rgba(255, 255, 255, 0.1)',
+                              },
+                            }}
+                          >
+                            <CheckCircleIcon />
+                          </IconButton>
+                          <IconButton
+                            onClick={() => handleDeleteTodo(section.id, todo.id)}
+                            size="small"
+                            sx={{
+                              color: theme.palette.error.main,
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                              },
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    </TaskCard>
                   ))}
-                </List>
-              </Collapse>
-            </CardContent>
-          </StyledCard>
-        </Fade>
-      ))}
-
-      <FloatingAddButton 
-        color="primary" 
-        onClick={() => setIsNewSectionDialogOpen(true)}
-        variant="extended"
-      >
-        <AddIcon sx={{ mr: 1 }} />
-        New Section
-      </FloatingAddButton>
-
-      {/* New Section Dialog */}
-      <Dialog
-        open={isNewSectionDialogOpen}
-        onClose={() => setIsNewSectionDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Create New Section</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Section Title"
-              value={newSectionTitle}
-              onChange={(e) => setNewSectionTitle(e.target.value)}
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FolderIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsNewSectionDialogOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              handleAddSection();
-              setIsNewSectionDialogOpen(false);
-            }}
-            disabled={!newSectionTitle.trim()}
-          >
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
+                </Collapse>
+              </CardContent>
+            </StyledCard>
+          </Grid>
+        ))}
+      </Grid>
 
       {currentSection && (
         <Box sx={{ 
@@ -629,19 +634,14 @@ export default function TodoList() {
           bottom: theme.spacing(4),
           right: theme.spacing(4),
           zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-          alignItems: 'flex-end'
         }}>
-          <Card sx={{ p: 2, width: '300px' }}>
+          <StyledCard sx={{ width: '300px', p: 2 }}>
             <Stack spacing={2}>
               <TextField
                 fullWidth
                 label="URL"
                 value={url}
                 onChange={(e) => {
-                  // Remove any newlines from pasted content
                   const cleanInput = e.target.value.replace(/[\r\n]+/g, '');
                   setUrl(cleanInput);
                 }}
@@ -699,13 +699,111 @@ export default function TodoList() {
                 onClick={handleAddTodo}
                 disabled={!url.trim() || !dueDate}
                 startIcon={<AddIcon />}
+                sx={{
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(45deg, #00ff9d 30%, #00cc7d 90%)'
+                    : 'linear-gradient(45deg, #00cc7d 30%, #009960 90%)',
+                  color: '#000',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 20px rgba(0, 255, 157, 0.3)',
+                  },
+                }}
               >
                 Add Task
               </Button>
             </Stack>
-          </Card>
+          </StyledCard>
         </Box>
       )}
+
+      <Dialog
+        open={isNewSectionDialogOpen}
+        onClose={() => setIsNewSectionDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: theme.palette.mode === 'dark' 
+              ? 'linear-gradient(135deg, rgba(20,20,20,0.8) 0%, rgba(30,30,30,0.8) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(245,245,245,0.8) 100%)',
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${theme.palette.mode === 'dark' ? '#2a2a2a' : 'rgba(0,0,0,0.12)'}`,
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontFamily: "'JetBrains Mono', monospace",
+          fontWeight: 600,
+        }}>
+          Create New Section
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Section Title"
+              value={newSectionTitle}
+              onChange={(e) => setNewSectionTitle(e.target.value)}
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FolderIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setIsNewSectionDialogOpen(false)}
+            sx={{ 
+              fontFamily: "'JetBrains Mono', monospace",
+              textTransform: 'none',
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              handleAddSection();
+              setIsNewSectionDialogOpen(false);
+            }}
+            disabled={!newSectionTitle.trim()}
+            sx={{
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(45deg, #00ff9d 30%, #00cc7d 90%)'
+                : 'linear-gradient(45deg, #00cc7d 30%, #009960 90%)',
+              color: '#000',
+              fontFamily: "'JetBrains Mono', monospace",
+              textTransform: 'none',
+            }}
+          >
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            fontFamily: "'JetBrains Mono', monospace",
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 } 
