@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { BrowserRouter } from 'react-router-dom';
@@ -7,6 +7,10 @@ import { PaletteMode } from '@mui/material';
 
 export default function App() {
   const [mode, setMode] = useState<PaletteMode>('dark');
+
+  const toggleColorMode = useCallback(() => {
+    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+  }, []);
 
   const theme = useMemo(
     () =>
@@ -143,7 +147,7 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
-        <Layout />
+        <Layout toggleColorMode={toggleColorMode} mode={mode} />
       </BrowserRouter>
     </ThemeProvider>
   );

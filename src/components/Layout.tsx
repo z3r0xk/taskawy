@@ -17,8 +17,9 @@ import {
   useMediaQuery,
   Tooltip,
   Badge,
+  PaletteMode,
 } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import CodeIcon from '@mui/icons-material/Code';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -27,16 +28,32 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import SettingsIcon from '@mui/icons-material/Settings';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import TodoList from './TodoList';
 
 const DRAWER_WIDTH = 240;
 
-export default function Layout() {
+interface LayoutProps {
+  toggleColorMode?: () => void;
+  mode?: PaletteMode;
+}
+
+export default function Layout({ toggleColorMode, mode }: LayoutProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
   };
 
   const drawer = (
@@ -82,9 +99,9 @@ export default function Layout() {
         my: 1 
       }} />
       <List>
-        <ListItem button selected>
+        <ListItem button onClick={() => handleNavigation('/')} selected={location.pathname === '/'}>
           <ListItemIcon>
-            <DashboardIcon sx={{ color: theme.palette.primary.main }} />
+            <DashboardIcon sx={{ color: location.pathname === '/' ? theme.palette.primary.main : theme.palette.text.secondary }} />
           </ListItemIcon>
           <ListItemText 
             primary="Dashboard" 
@@ -94,9 +111,9 @@ export default function Layout() {
             }}
           />
         </ListItem>
-        <ListItem button>
+        <ListItem button onClick={() => handleNavigation('/tasks')} selected={location.pathname === '/tasks'}>
           <ListItemIcon>
-            <TaskIcon sx={{ color: theme.palette.text.secondary }} />
+            <TaskIcon sx={{ color: location.pathname === '/tasks' ? theme.palette.primary.main : theme.palette.text.secondary }} />
           </ListItemIcon>
           <ListItemText 
             primary="Tasks" 
@@ -106,9 +123,9 @@ export default function Layout() {
             }}
           />
         </ListItem>
-        <ListItem button>
+        <ListItem button onClick={() => handleNavigation('/analytics')} selected={location.pathname === '/analytics'}>
           <ListItemIcon>
-            <AnalyticsIcon sx={{ color: theme.palette.text.secondary }} />
+            <AnalyticsIcon sx={{ color: location.pathname === '/analytics' ? theme.palette.primary.main : theme.palette.text.secondary }} />
           </ListItemIcon>
           <ListItemText 
             primary="Analytics" 
@@ -124,9 +141,9 @@ export default function Layout() {
         my: 1 
       }} />
       <List>
-        <ListItem button>
+        <ListItem button onClick={() => handleNavigation('/settings')} selected={location.pathname === '/settings'}>
           <ListItemIcon>
-            <SettingsIcon sx={{ color: theme.palette.text.secondary }} />
+            <SettingsIcon sx={{ color: location.pathname === '/settings' ? theme.palette.primary.main : theme.palette.text.secondary }} />
           </ListItemIcon>
           <ListItemText 
             primary="Settings" 
@@ -203,6 +220,13 @@ export default function Layout() {
                 </Badge>
               </IconButton>
             </Tooltip>
+            {toggleColorMode && (
+              <Tooltip title={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}>
+                <IconButton onClick={toggleColorMode} color="inherit">
+                  {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
@@ -281,7 +305,13 @@ export default function Layout() {
               },
             }}
           >
-            <Outlet />
+            <Routes>
+              <Route path="/" element={<TodoList />} />
+              <Route path="/tasks" element={<TodoList />} />
+              <Route path="/analytics" element={<div>Analytics Coming Soon</div>} />
+              <Route path="/settings" element={<div>Settings Coming Soon</div>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </Paper>
         </Container>
       </Box>
