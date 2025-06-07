@@ -40,6 +40,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import FolderIcon from '@mui/icons-material/Folder';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import { styled } from '@mui/material/styles';
 
 interface Todo {
@@ -176,16 +177,30 @@ export default function TodoList() {
   };
 
   const handleAddTodo = async () => {
-    if (!url || !dueDate || !currentSection) return;
+    if (!url.trim() || !dueDate || !currentSection) return;
+
+    // Clean the URL input - remove any newlines and extra spaces
+    const cleanUrl = url.trim();
+    
+    // Basic URL validation
+    try {
+      new URL(cleanUrl);
+    } catch (e) {
+      showSnackbar('Please enter a valid URL', 'error');
+      return;
+    }
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(cleanUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const text = await response.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, 'text/html');
-      const pageTitle = title || doc.title || url;
+      const pageTitle = title.trim() || doc.title || cleanUrl;
 
-      if (isDuplicateTask(currentSection, url, pageTitle)) {
+      if (isDuplicateTask(currentSection, cleanUrl, pageTitle)) {
         showSnackbar('A task with this URL or title already exists in this section', 'error');
         return;
       }
@@ -193,7 +208,7 @@ export default function TodoList() {
       const newTodo: Todo = {
         id: crypto.randomUUID(),
         title: pageTitle,
-        url,
+        url: cleanUrl,
         dueDate,
         completed: false,
       };
@@ -204,9 +219,10 @@ export default function TodoList() {
           : section
       ));
 
+      // Clear the form
       setUrl('');
-      setDueDate(null);
       setTitle('');
+      setDueDate(null);
       showSnackbar('Task added successfully', 'success');
     } catch (error) {
       console.error('Error fetching URL:', error);
@@ -624,9 +640,15 @@ export default function TodoList() {
                 fullWidth
                 label="URL"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => {
+                  // Remove any newlines from pasted content
+                  const cleanInput = e.target.value.replace(/[\r\n]+/g, '');
+                  setUrl(cleanInput);
+                }}
                 variant="outlined"
                 size="small"
+                placeholder="https://example.com"
+                helperText="Enter a single URL"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -642,6 +664,7 @@ export default function TodoList() {
                 onChange={(e) => setTitle(e.target.value)}
                 variant="outlined"
                 size="small"
+                placeholder="Task title"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -661,6 +684,7 @@ export default function TodoList() {
                 }}
                 variant="outlined"
                 size="small"
+                required
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -673,7 +697,7 @@ export default function TodoList() {
                 fullWidth
                 variant="contained"
                 onClick={handleAddTodo}
-                disabled={!url || !dueDate}
+                disabled={!url.trim() || !dueDate}
                 startIcon={<AddIcon />}
               >
                 Add Task
